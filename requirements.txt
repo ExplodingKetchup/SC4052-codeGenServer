@@ -1,0 +1,4 @@
+flask
+dotenv
+streamlit
+google-genai
