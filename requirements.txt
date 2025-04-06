@@ -2,4 +2,10 @@ flask
 dotenv
 python-dotenv==1.1.0
 streamlit
+streamlit-ace
 google-genai
+numpy
+pandas
+matplotlib
+seaborn
+requests
