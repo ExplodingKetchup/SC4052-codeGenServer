@@ -1,4 +1,3 @@
-from click import prompt
 from flask import Flask, request, Request
 
 import gemini_caller
