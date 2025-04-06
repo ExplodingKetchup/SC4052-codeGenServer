@@ -121,14 +121,10 @@ def kernel_page():
             height=200,
         )
 
-        col1, col2 = st.columns([1, 5])
-        with col1:
-            if st.button("▶️ Run", key=f"run_button_{i}"):
-                run_code(i)
-
-        with col2:
-            st.markdown("**Output:**")
-            st.code(st.session_state.outputs[i], language="python")
+        if st.button("▶️ Run", key=f"run_button_{i}"):
+            run_code(i)
+            
+        st.code(st.session_state.outputs[i], language="python")
 
     st.divider()
     if st.button("➕ Add New Cell"):
