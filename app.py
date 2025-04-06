@@ -30,139 +30,6 @@ def login():
             st.error("Invalid username or password.")
     return False
 
-def profile_page():
-    all_users = db_manager.get_users()
-    user_names = [u[1] for u in all_users]
-    user_id_map = {u[1]: u[0] for u in all_users}
-
-    current_user_index = user_names.index(st.session_state.username)
-
-    selected_user = st.selectbox(
-        "Select Profile", user_names, index=current_user_index)
-    selected_user_id = user_id_map[selected_user]
-
-    user_images = db_manager.get_user_images(selected_user_id)
-    is_owner = st.session_state.user_id == selected_user_id
-
-    st.header(f"{'Your' if is_owner else selected_user} Profile")
-
-    if len(user_images) == 0:
-        st.write("This user doesn't have any generated images.")
-        return
-
-    num_columns = 4
-    images_to_delete = []
-    images_per_row = len(user_images) // num_columns + 1
-    for i in range(images_per_row):
-        col = st.columns(num_columns)
-        for j in range(num_columns):
-            index = i * num_columns + j
-            if index < len(user_images):
-                image = user_images[index]
-                if is_owner:
-                    delete_checkbox = col[j].checkbox(
-                        f"Delete Image {image[0]}", key=f"delete_{image[0]}"
-                    )
-                    if delete_checkbox:
-                        images_to_delete.append(image[0])
-                col[j].image(
-                    image[-1],
-                )
-                step_str = (
-                    f"**_Steps:_** Base ({literal_eval(image[3])['base_step']}) | Refiner ({literal_eval(image[3])['refiner_step']})<br>"
-                    if "base_step" in literal_eval(image[3]).keys()
-                    else ""
-                )
-                cfg_str = (
-                    f"**_Guidance scale:_** {literal_eval(image[3])['cfg']}<br>"
-                    if "cfg" in literal_eval(image[3]).keys()
-                    else ""
-                )
-                img2img_str = (
-                    f"**_Image to Image mode_**<br>"
-                    if step_str == "" and cfg_str == ""
-                    else ""
-                )
-                col[j].markdown(
-                    f"**_Model:_** {image[2]}<br>\
-                    {step_str}\
-                    {cfg_str}\
-                    {img2img_str}\
-                    **_Seed:_** {literal_eval(image[3])['seed']}<br>\
-                    **_Prompt:_** {literal_eval(image[3])['prompt']}\
-                    ",
-                    unsafe_allow_html=True,
-                )
-                # col[j].image(
-                #     image[-1],
-                #     caption=f"Model: {image[2]},\tSeed: {literal_eval(image[3])['seed']},\tPrompt: {literal_eval(image[3])['prompt']}",
-                # )
-
-    if st.button("Delete Images") and images_to_delete:
-        db_manager.delete_images(images_to_delete)
-        st.rerun()
-
-
-def request_text2image(**kwargs):
-    url = "http://localhost:5000/text2img"
-    payload = {
-        "prompt": kwargs.get("prompt"),
-        "negative_prompt": kwargs.get("negative_prompt"),
-        "batch_size": kwargs.get("batch_size"),
-        "width": kwargs.get("width"),
-        "height": kwargs.get("height"),
-        "seed": kwargs.get("seed"),
-        "mode": kwargs.get("mode"),
-        "base_step": kwargs.get("base_step"),
-        "refiner_step": kwargs.get("refiner_step"),
-        "cfg": kwargs.get("cfg"),
-    }
-    headers = {"Content-Type": "application/json"}
-
-    response = requests.post(url, json=payload, headers=headers)
-
-    if response.status_code == 200:
-        image_bytes_stream = response.content
-        delimiter = b"--DELIMITER--"
-        image_bytes_list = image_bytes_stream.split(delimiter)
-        images = []
-        for image_bytes in image_bytes_list:
-            if image_bytes:
-                image = Image.open(BytesIO(image_bytes))
-                images.append(image)
-        return images
-    else:
-        st.error(f"Error: {response.status_code}")
-        return None
-
-
-def request_image2image(**kwargs):
-    url = "http://localhost:5000/img2img"
-    payload = {
-        "prompt": kwargs.get("prompt"),
-        "negative_prompt": kwargs.get("negative_prompt", ""),
-        "seed": kwargs.get("seed"),
-        "mode": kwargs.get("mode"),
-        "denoise": kwargs.get("denoise"),
-    }
-    headers = {"Content-Type": "application/octet-stream"}
-    response = requests.post(
-        url, data=kwargs.get("image"), headers=headers, params=payload
-    )
-
-    if response.status_code == 200:
-        image_bytes_stream = response.content
-        delimiter = b"--DELIMITER--"
-        image_bytes_list = image_bytes_stream.split(delimiter)
-        images = []
-        for image_bytes in image_bytes_list:
-            if image_bytes:
-                image = Image.open(BytesIO(image_bytes))
-                images.append(image)
-        return images
-    else:
-        st.error(f"Error: {response.status_code} {response.text}")
-        return None
 
 prompt_options = [
     "Import data",
@@ -267,6 +134,8 @@ def kernel_page():
     if st.button("➕ Add New Cell"):
         st.session_state.code_cells.append("")
         st.session_state.outputs.append("")
+        st.session_state.prompts.append("")
+        st.session_state.prompts_function.append("")
 
 def main():
     logged_in = st.session_state.get("logged_in", False)
@@ -276,14 +145,35 @@ def main():
         st.session_state.logged_in = True
         st.session_state.username = username
         st.sidebar.write(f"Welcome, {st.session_state.username}! ✨")
-        kernel_page()
+        option = st.sidebar.radio(
+            "Choose your functions:",
+            ["Upload data", "Data Analysis"]
+        )
+        if option == "Upload data":
+            uploaded_file = st.file_uploader("Upload your data file", type=["csv", "xlsx"])
+            if uploaded_file is not None:
+                # Get the filename
+                file_name = uploaded_file.name
+                
+                # Save path
+                save_path = f'./{file_name}' 
+                
+                # Save the file locally
+                with open(save_path, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+
+                st.success(f"File saved to {save_path}")
+        else:
+            kernel_page()
     else:
         login()
 
 
 if __name__ == "__main__":
     import contextlib
-    import streamlit as st
     import io
     import traceback
+    import pandas as pd
+    import numpy as np
+    import seaborn as sns
     main()
