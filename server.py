@@ -41,23 +41,26 @@ def login():
 @app.route("/import-data", methods=["POST"])
 def import_data():
     received_prompt = get_prompt(request)
+    data_source_list = request.get_json().get("data_source_list", [])
     if len(received_prompt) == 0:
-        return "Where prompt?", 400
-    return gemini_caller.codegen_import_data(received_prompt)
+        return "Prompt is empty", 400
+    return gemini_caller.codegen_import_data(received_prompt, data_source_list)
 
 
 @app.route("/data-processing", methods=["POST"])
 def data_processing():
     received_prompt = get_prompt(request)
+    global_dict = request.get_json().get("globals_dict", {})
     if len(received_prompt) == 0:
-        return "Where prompt?", 400
-    return gemini_caller.codegen_process_data(received_prompt)
+        return "Prompt is empty", 400
+    return gemini_caller.codegen_process_data(received_prompt, global_dict=global_dict)
 
 
 @app.route("/plot-data", methods=["POST"])
 def plot_data():
     received_prompt = get_prompt(request)
+    global_dict = request.get_json().get("globals_dict", {})
     if len(received_prompt) == 0:
-        return "Where prompt?", 400
-    return gemini_caller.codegen_plot_data(received_prompt)
+        return "Prompt is empty", 400
+    return gemini_caller.codegen_plot_data(received_prompt, global_dict=global_dict)
 

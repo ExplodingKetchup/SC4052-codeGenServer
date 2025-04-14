@@ -1,5 +1,6 @@
 from ast import literal_eval
 from io import BytesIO
+import os
 
 import streamlit as st
 import random
@@ -11,6 +12,7 @@ from streamlit_ace import st_ace
 st.set_page_config(layout="wide")
 
 BACKEND_URL = "http://localhost:5000"
+SAVE_FOLDER = "uploaded_files"
 
 
 def login():
@@ -72,15 +74,15 @@ def kernel_page():
 
         if function == "Import data":
             response = requests.post(
-                f"{BACKEND_URL}/import-data", json={"prompt": prompt}
+                f"{BACKEND_URL}/import-data", json={"prompt": prompt, "data_source_list": os.listdir(SAVE_FOLDER)}
             )
         elif function == "Data processing":
             response = requests.post(
-                f"{BACKEND_URL}/data-processing", json={"prompt": prompt}
+                f"{BACKEND_URL}/data-processing", json={"prompt": prompt, "globals_dict": str(st.session_state.globals_dict)}
             )
         elif function == "Data visualization":
             response = requests.post(
-                f"{BACKEND_URL}/plot-data", json={"prompt": prompt}
+                f"{BACKEND_URL}/plot-data", json={"prompt": prompt, "globals_dict": str(st.session_state.globals_dict)}
             )
         else:
             st.error("Invalid function selected.")
@@ -134,8 +136,8 @@ def kernel_page():
         st.session_state.prompts_function.append("")
 
 def main():
-    logged_in = st.session_state.get("logged_in", False)
-    username = st.session_state.get("username", None)
+    logged_in = st.session_state.get("logged_in", True)
+    username = st.session_state.get("username", 'ádas')
 
     if logged_in and username:
         st.session_state.logged_in = True
@@ -152,13 +154,23 @@ def main():
                 file_name = uploaded_file.name
                 
                 # Save path
-                save_path = f'./{file_name}' 
+                save_path = f'./{SAVE_FOLDER}/{file_name}' 
                 
                 # Save the file locally
                 with open(save_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
 
-                st.success(f"File saved to {save_path}")
+            if os.path.exists(SAVE_FOLDER):
+                st.write("Datasets")
+                files = os.listdir(SAVE_FOLDER)
+                for file in files:
+                    st.write(f"- {file}")
+                    if file.endswith(".csv"):
+                        df = pd.read_csv(os.path.join(SAVE_FOLDER, file))
+                        st.dataframe(df)
+                    elif file.endswith(".xlsx"):
+                        df = pd.read_excel(os.path.join(SAVE_FOLDER, file))
+                        st.dataframe(df)
         else:
             kernel_page()
     else:
