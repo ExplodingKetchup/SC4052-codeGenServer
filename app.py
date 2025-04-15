@@ -136,8 +136,8 @@ def kernel_page():
         st.session_state.prompts_function.append("")
 
 def main():
-    logged_in = st.session_state.get("logged_in", True)
-    username = st.session_state.get("username", 'ádas')
+    logged_in = st.session_state.get("logged_in", False)
+    username = st.session_state.get("username", None)
 
     if logged_in and username:
         st.session_state.logged_in = True
