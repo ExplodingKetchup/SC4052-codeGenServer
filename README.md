@@ -23,7 +23,11 @@ SC4052-codeGenServer/
   ```bash
   pip install -r requirements.txt
   ```
-
+- Populate `.env` file with your API key for GEMINI model and SERPER google search
+``` bash
+GEMINI_API_KEY=
+SERPER_API_KEY=
+```
 ### Step 1: Run the Flask Backend
 1. Navigate to the project directory.
 2. Start the Flask server:
