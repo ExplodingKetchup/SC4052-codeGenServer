@@ -1,4 +1,19 @@
-# Project Title: SC4052 Code Generation Server
+# 📊 Low-Code Unified Platform for Data Analytics
+
+This project is a **low-code data analytics platform** designed to help users—both technical and non-technical—analyze datasets with ease using **natural language prompts**. By integrating **Streamlit** for the frontend and **Flask + Google Gemini LLM** for the backend, the platform generates executable Python code for data tasks like importing, preprocessing, and visualizing data.
+
+## 🚀 Features
+
+- 🔤 **Natural Language to Python Code**  
+  Users can describe their desired data task in plain English, and the system generates corresponding Python code using tools like `pandas`, `numpy`, `matplotlib`, and `seaborn`.
+
+- 🤖 **AI-Powered Backend**  
+  The backend uses **Gemini 2.0 Flash**, a generative large language model (LLM) by Google, capable of understanding context, function calling, and code generation with up-to-date logic.
+
+- 🖥️ **Interactive User Interface**
+  - **Login Page** – User authentication for secure access.
+  - **Upload Data Page** – Upload and manage data files (e.g., CSV, Excel).
+  - **Kernel Page** – Generate and run AI-assisted Python code in an interactive notebook-like environment.
 
 ## Team Members
 - Dang Huy Phuong: U2120380G
